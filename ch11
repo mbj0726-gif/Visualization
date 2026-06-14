@@ -1,0 +1,119 @@
+import os
+import sys
+
+# PySide6에서 필요한 클래스들 import
+from PySide6.QtWidgets import (
+    QApplication,      # 어플리케이션 객체
+    QMainWindow,       # 메인 윈도우 프레임
+    QLineEdit,         # 한 줄 텍스트 입력 위젯
+    QLabel             # 텍스트 표시 위젯
+)
+from PySide6.QtUiTools import QUiLoader     # .ui 파일을 런타임에 로드하는 도구
+from PySide6.QtCore import QFile            # Qt 파일 입출력을 위한 클래스
+
+
+# 메인 윈도우 클래스 정의
+class MainWindow(QMainWindow):
+    def __init__(self, ui_fstr):
+        super().__init__()
+
+        # UI 파일(.ui)로부터 위젯 트리를 생성하여 중앙 위젯으로 설정
+        self.wnd = self.ds_get_wnd_from_ui(ui_fstr)
+
+        # 위젯 참조를 찾아서 시그널-슬롯 연결
+        self.ds_setup()
+
+        # 생성된 위젯을 QMainWindow의 중앙에 배치
+        self.setCentralWidget(self.wnd)
+        self.show()
+
+    # UI 내부 위젯에 접근하고 이벤트를 연결하는 함수
+    def ds_setup(self):
+        # objectName으로 QLineEdit와 QLabel 찾기
+        self.lineEdit = self.wnd.findChild(QLineEdit, "lineEdit")
+        self.label = self.wnd.findChild(QLabel, "label")
+
+        # UI에 필수 위젯이 없다면 오류 발생
+        # 누락된 위젯들 확인
+        missing_widgets = []
+        if not self.lineEdit:
+            missing_widgets.append("lineEdit")
+        if not self.label:
+            missing_widgets.append("label")
+        
+        if missing_widgets:
+            raise AttributeError(f"UI에 다음 위젯들이 없습니다: {', '.join(missing_widgets)}")
+        
+
+        # returnPressed 시 라벨 업데이트
+        self.lineEdit.returnPressed.connect(self.ds_update_label)
+
+    # 입력된 텍스트를 라벨에 표시하는 슬롯
+    def ds_update_label(self):
+        self.label.setText(f'Hello, {self.lineEdit.text()}')
+
+    # .ui 파일을 열어서 QWidget으로 로딩하는 함수
+    def ds_get_wnd_from_ui(self, ui_fstr):
+        ui_loader = QUiLoader()
+
+        # 현재 파일의 디렉토리 기준으로 .ui 파일 경로 구성
+        root_dir = os.path.dirname(os.path.abspath(__file__))
+        ui_path = os.path.join(root_dir, ui_fstr)
+
+        # QFile 객체로 .ui 파일 준비
+        ui_file = QFile(ui_path)
+        if not ui_file.exists():
+            raise FileNotFoundError(f"UI 파일이 존재하지 않습니다: {ui_path}")
+
+        # 파일 열고 로드
+        if not ui_file.open(QFile.ReadOnly):
+            raise IOError(f"UI 파일을 열 수 없습니다: {ui_path}")
+
+        try:
+            wnd = ui_loader.load(ui_file, self)  # parent를 self로 설정
+            if wnd is None:
+                raise RuntimeError(f"UI 파일 로딩 실패: {ui_path}")
+            return wnd
+        finally:
+            ui_file.close()  # 예외 발생해도 반드시 닫힘
+
+
+# 애플리케이션 진입점
+if __name__ == '__main__':
+    app = QApplication(sys.argv)                 # Qt 애플리케이션 생성
+    window = MainWindow('Ex1_QtDesigner.ui')     # 메인 윈도우 클래스 인스턴스 생성
+    sys.exit(app.exec())                         # 이벤트 루프 실행
+
+import sys
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import QUiLoader
+
+loader = QUiLoader()
+
+def mainwindow_setup(w):
+    w.setWindowTitle("MainWindow Title")
+
+app = QtWidgets.QApplication(sys.argv)
+
+window = loader.load("mainwindow.ui", None)
+mainwindow_setup(window)
+window.show()
+app.exec()
+
+import sys
+from PySide6 import QtWidgets
+
+from MainWindow import Ui_MainWindow
+
+
+class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+
+
+app = QtWidgets.QApplication(sys.argv)
+
+window = MainWindow()
+window.show()
+app.exec()
