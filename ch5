@@ -1,0 +1,21 @@
+while (!exit) {
+
+    while (!posted_event_queue_is_empty) {   // 1. Posted event 처리
+        process_next_posted_event();
+    }
+
+    while (!spontaneous_event_queue_is_empty) {  // 2. Spontaneous event 처리
+        process_next_spontaneous_event();
+    }
+
+    while (!posted_event_queue_is_empty) {   // 3. 2번 처리 중 새로 생긴 Posted event 처리
+        process_next_posted_event();
+    }
+
+}
+class MW(QWidget):
+
+    def mousePressEvent(self, event):
+        """마우스 클릭 시 Qt가 자동으로 호출하는 event handler."""
+        print(f"클릭 위치: {event.position()}")
+button.clicked.connect(self.on_button_clicked)
